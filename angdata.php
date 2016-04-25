@@ -4,76 +4,39 @@ header('Content-Type: text/html; charset=utf-8');
 
 include 'set.php';
 include 'Database.class.php';
+include 'Vykonavatel.class.php';
 
 $db = new Database($set_host, $set_user, $set_pass, $set_dbname);
 
 $db->query("SET CHARACTER SET utf8");
 $db->execute();
-/*$jwt = new JWT();
 
-if($_GET['vypisZeton']) {
-	$token = null;
+$params = json_decode(file_get_contents('php://input'), true);
 
-	$headers = apache_request_headers();
+$vyk = new Vykonavatel($db);
 
-	if(isset($headers['Authorization'])){
-		$matches = array();
-		preg_match('/Token token="(.*)"/', $headers['Authorization'], $matches);
 
-		if(isset($matches[1])){
-			$token = $matches[1];
-		}
-	}
+switch ($params['co']) {
+	case 'spracujTxt':
+		$vyk->spracujTxt($params['surovyTxt']);
+		$vyk->vypisVysledok();
+		
+		break;
 
-	$token = $jwt->decode($token, $key, array('HS256'));
+	case 'nacitajProjekty':
+		$vyk->nacitajProjekty();
+		$vyk->vypisVysledok();
 
-	if($token->name) {
-		echo $token->name;
+		break;
 
-	} else {
-		echo "prihlas sa";
-	}
+	case 'pridajProjekt':
+		$vyk->pridajProjekt($params['nazov']);
+		$vyk->nacitajProjekty();
+		$vyk->vypisVysledok();
 
-} else if($_GET['vratZeton']) {
+		break;
 
-	$request_body = file_get_contents('php://input');
-	echo json_decode($request_body);
+	default:
+		break;
+}
 
-	//echo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ";
-} else {*/
-	var_dump($_POST);
-	switch ($_POST['co']) {
-		case 'spracujTxt':
-			$vysledok = '';
-
-			if($_POST['pole']) {
-				$pole = $_POST['pole'];
-
-				foreach(preg_split("/((\r?\n)|(\r\n?))/", $pole) as $line) {
-					$vysledok .= "<p><label><input type='checkbox'> ".$line."</label></p>";
-				}
-			}
-
-			echo json_encode($vysledok);
-
-			break;
-
-		case 'nacitajProjekty':
-			$db->query("SELECT
-							nazov,
-							id
-						FROM
-							projekty
-
-						ORDER BY
-							hry.id
-						DESC");
-
-			echo json_encode($db->resultset());
-
-			break;
-
-		default:
-			break;
-	}
-//}
